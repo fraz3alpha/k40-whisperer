@@ -23,7 +23,7 @@ import re, math
 
 def lexPath(d):
     """
-    returns and iterator that breaks path data 
+    returns and iterator that breaks path data
     identifies command and parameter tokens
     """
     offset = 0
@@ -48,7 +48,7 @@ def lexPath(d):
             offset = m.end()
             continue
         #TODO: create new exception
-        raise Exception, 'Invalid path data!'
+        raise Exception('Invalid path data!')
 '''
 pathdefs = {commandfamily:
     [
@@ -59,15 +59,15 @@ pathdefs = {commandfamily:
     ]}
 '''
 pathdefs = {
-    'M':['L', 2, [float, float], ['x','y']], 
-    'L':['L', 2, [float, float], ['x','y']], 
-    'H':['H', 1, [float], ['x']], 
-    'V':['V', 1, [float], ['y']], 
-    'C':['C', 6, [float, float, float, float, float, float], ['x','y','x','y','x','y']], 
-    'S':['S', 4, [float, float, float, float], ['x','y','x','y']], 
-    'Q':['Q', 4, [float, float, float, float], ['x','y','x','y']], 
-    'T':['T', 2, [float, float], ['x','y']], 
-    'A':['A', 7, [float, float, float, int, int, float, float], ['r','r','a',0,'s','x','y']], 
+    'M':['L', 2, [float, float], ['x','y']],
+    'L':['L', 2, [float, float], ['x','y']],
+    'H':['H', 1, [float], ['x']],
+    'V':['V', 1, [float], ['y']],
+    'C':['C', 6, [float, float, float, float, float, float], ['x','y','x','y','x','y']],
+    'S':['S', 4, [float, float, float, float], ['x','y','x','y']],
+    'Q':['Q', 4, [float, float, float, float], ['x','y','x','y']],
+    'T':['T', 2, [float, float], ['x','y']],
+    'A':['A', 7, [float, float, float, int, int, float, float], ['r','r','a',0,'s','x','y']],
     'Z':['L', 0, [], []]
     }
 def parsePath(d):
@@ -83,7 +83,7 @@ def parsePath(d):
     subPathStart = pen
     lastControl = pen
     lastCommand = ''
-    
+
     while 1:
         try:
             token, isCommand = lexer.next()
@@ -93,8 +93,8 @@ def parsePath(d):
         needParam = True
         if isCommand:
             if not lastCommand and token.upper() != 'M':
-                raise Exception, 'Invalid path, must begin with moveto.'    
-            else:                
+                raise Exception('Invalid path, must begin with moveto.')
+            else:
                 command = token
         else:
             #command was omited
@@ -106,16 +106,16 @@ def parsePath(d):
                 else:
                     command = pathdefs[lastCommand.upper()][0].lower()
             else:
-                raise Exception, 'Invalid path, no initial command.'    
+                raise Exception('Invalid path, no initial command.')
         numParams = pathdefs[command.upper()][1]
         while numParams > 0:
             if needParam:
-                try: 
+                try:
                     token, isCommand = lexer.next()
                     if isCommand:
-                        raise Exception, 'Invalid number of parameters'
+                        raise Exception('Invalid number of parameters')
                 except StopIteration:
-                    raise Exception, 'Unexpected end of path'
+                    raise Exception('Unexpected end of path')
             cast = pathdefs[command.upper()][2][-numParams]
             param = cast(token)
             if command.islower():
@@ -128,8 +128,8 @@ def parsePath(d):
             numParams -= 1
         #segment is now absolute so
         outputCommand = command.upper()
-    
-        #Flesh out shortcut notation    
+
+        #Flesh out shortcut notation
         if outputCommand in ('H','V'):
             if outputCommand == 'H':
                 params.append(pen[1])

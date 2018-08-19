@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 '''
 This script comunicated with the K40 Laser Cutter.
 
@@ -67,7 +67,7 @@ class K40_CLASS:
                 pass
         if cnt >= status_timeouts:
             return None
-                
+
         response = None
         read_cnt = 0
         while response==None and read_cnt < status_timeouts:
@@ -76,25 +76,25 @@ class K40_CLASS:
             except:
                 response = None
                 read_cnt = read_cnt + 1
-        
+
         DEBUG = False
         if response != None:
             if DEBUG:
                 if int(response[0]) != 255:
-                    print "0: ", response[0]
-                elif int(response[1]) != 206: 
-                    print "1: ", response[1]
+                    print ("0: ", response[0])
+                elif int(response[1]) != 206:
+                    print ("1: ", response[1])
                 elif int(response[2]) != 111:
-                    print "2: ", response[2]
+                    print ("2: ", response[2])
                 elif int(response[3]) != 8:
-                    print "3: ", response[3]
+                    print ("3: ", response[3])
                 elif int(response[4]) != 19: #Get a 3 if you try to initialize when already initialized
-                    print "4: ", response[4]
+                    print ("4: ", response[4])
                 elif int(response[5]) != 0:
-                    print "5: ", response[5]
+                    print ("5: ", response[5])
                 else:
-                    print ".",
-            
+                    print (".",)
+
             if response[1]==self.OK            or \
                response[1]==self.BUFFER_FULL   or \
                response[1]==self.CRC_ERROR     or \
@@ -106,7 +106,7 @@ class K40_CLASS:
         else:
             return None
 
-    
+
     def unlock_rail(self):
         self.send_packet(self.unlock)
 
@@ -122,7 +122,7 @@ class K40_CLASS:
     def release_usb(self):
         usb.util.dispose_resources(self.dev)
         self.dev = None
-    
+
     #######################################################################
     #  The one wire CRC algorithm is derived from the OneWire.cpp Library
     #  The latest version of this library may be found at:
@@ -143,7 +143,7 @@ class K40_CLASS:
     def none_function(self,dummy=None,bgcolor=None):
         #Don't delete this function (used in send_data)
         return False
-    
+
     def send_data(self,data,update_gui=None,stop_calc=None,passes=1,preprocess_crc=True, wait_for_laser=False):
         if stop_calc == None:
             stop_calc=[]
@@ -167,7 +167,7 @@ class K40_CLASS:
                     data[-4]=ord("F")
                 else:
                     data[-4]=ord("@")
-                
+
             for i in range(istart,len_data):
                 if cnt > 31:
                     packet[-1] = self.OneWireCRC(packet[1:len(packet)-2])
@@ -179,7 +179,7 @@ class K40_CLASS:
                         update_gui("Calculating CRC data and Generate Packets: %.1f%%" %(100.0*float(i)/float(len_data)))
                     packet = blank[:]
                     cnt = 2
-                    
+
                     if stop_calc[0]==True:
                         raise StandardError("Action Stopped by User.")
                 packet[cnt]=data[i]
@@ -225,7 +225,7 @@ class K40_CLASS:
                 continue
             ######################################
             response = self.say_hello()
-                            
+
             if response == self.BUFFER_FULL:
                 while response == self.BUFFER_FULL:
                     response = self.say_hello()
@@ -234,7 +234,7 @@ class K40_CLASS:
             elif response == self.CRC_ERROR:
                 crc_cnt=crc_cnt+1
                 if crc_cnt < self.n_timeouts:
-                    msg = "Data transmission (CRC) error #%d" %(crc_cnt)               
+                    msg = "Data transmission (CRC) error #%d" %(crc_cnt)
                     update_gui(msg,bgcolor='yellow')
                 else:
                     msg = "There are many data transmission errors (%d). Press stop to stop trying!"  %(crc_cnt)
@@ -247,7 +247,7 @@ class K40_CLASS:
                 # The controller board is not reporting status. but we will
                 # assume things are going OK. until we cannot transmit to the controller.
                 break #break to move on to next packet
-            
+
             else: #assume: response == self.OK:
                 break #break to move on to next packet
 
@@ -280,7 +280,7 @@ class K40_CLASS:
             egv_inst = egv(target=lambda s:data.append(s))
             egv_inst.make_move_data(dxmils,dymils)
             self.send_data(data, wait_for_laser=False)
-    
+
     def initialize_device(self,verbose=False):
         try:
             self.release_usb()
@@ -333,14 +333,14 @@ class K40_CLASS:
             print (ctrlxfer)
 
         #return True
-        
+
     def hex2dec(self,hex_in):
         #format of "hex_in" is ["40","e7"]
         dec_out=[]
         for a in hex_in:
             dec_out.append(int(a,16))
         return dec_out
-    
+
 
 if __name__ == "__main__":
     k40=K40_CLASS()
@@ -350,16 +350,12 @@ if __name__ == "__main__":
         k40.initialize_device(verbose=True)
     # the following does not work for python 2.5
     except RuntimeError as e: #(RuntimeError, TypeError, NameError, StandardError):
-        print(e)    
+        print(e)
         print("Exiting...")
-        os._exit(0) 
+        os._exit(0)
 
     #k40.initialize_device()
     print (k40.say_hello())
     #print k40.reset_position()
     #print k40.unlock_rail()
     print ("DONE")
-
-    
-
-    

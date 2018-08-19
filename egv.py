@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 '''
 This script reads/writes egv format
 
@@ -37,7 +37,7 @@ class Interpolate(object):
         x_list = self.x_list = map(float, x_list)
         y_list = self.y_list = map(float, y_list)
         intervals = zip(x_list, x_list[1:], y_list, y_list[1:])
-        self.slopes = [(y2 - y1)/(x2 - x1) for x1, x2, y1, y2 in intervals]        
+        self.slopes = [(y2 - y1)/(x2 - x1) for x1, x2, y1, y2 in intervals]
     def __getitem__(self, x):
         if x <= self.x_list[0]:
             return self.y_list[0]
@@ -64,20 +64,20 @@ class egv:
         self.ANGLE = 77 #ord("M")=77
         self.ON    = 68 #ord("D")=68
         self.OFF   = 85 #ord("U")=85
-        
+
         # % Yxtart % Xstart % Yend % Xend % I % C VXXXXXXX CUT_TYPE
         #
         # %Ystart_pos %Xstart_pos %Yend_pos %Xend_pos  (start pos is the location of the head before the code is run)
         # I is always I ?
         # C is C for cutting or Marking otherwise it is omitted
         # V is the start of 7 digits indicating the feed rate 255 255 1
-        # CUT_TYPE cutting/marking, Engraving=G followed by the raster step in thousandths of an inch 
+        # CUT_TYPE cutting/marking, Engraving=G followed by the raster step in thousandths of an inch
 
     def move(self,direction,distance,laser_on=False,angle_dirs=None):
 
         if angle_dirs==None:
             angle_dirs = [self.Modal_AX,self.Modal_AY]
-            
+
         if direction == self.Modal_dir         \
             and laser_on == self.Modal_on      \
             and angle_dirs[0] == self.Modal_AX \
@@ -92,7 +92,7 @@ class egv:
                 else:
                     self.write(self.OFF)
                 self.Modal_on = laser_on
-                    
+
             if direction == self.ANGLE:
                 if angle_dirs[0]!=self.Modal_AX:
                     self.write(angle_dirs[0])
@@ -100,7 +100,7 @@ class egv:
                 if angle_dirs[1]!=self.Modal_AY:
                     self.write(angle_dirs[1])
                     self.Modal_AY = angle_dirs[1]
-                
+
             self.Modal_dir  = direction
             self.Modal_dist = distance
 
@@ -108,8 +108,8 @@ class egv:
                 self.Modal_AX = direction
             if direction == self.UP or direction == self.DOWN:
                 self.Modal_AY = direction
-                
-        
+
+
     def flush(self,laser_on=None):
         if self.Modal_dist > 0:
             self.write(self.Modal_dir)
@@ -123,7 +123,7 @@ class egv:
             self.Modal_on   = laser_on
         self.Modal_dist = 0
 
-        
+
     #  The one wire CRC algorithm is derived from the OneWire.cpp Library
     #  The library location: http://www.pjrc.com/teensy/td_libs_OneWire.html
     def OneWireCRC(self,line):
@@ -147,7 +147,7 @@ class egv:
         code = []
         v122 = 255
         dist_milsA = int(dist_mils)
-        
+
         for i in range(0,int(floor(dist_mils/v122))):
             code.append(122)
             dist_milsA = dist_milsA-v122
@@ -167,7 +167,7 @@ class egv:
         else:
             raise StandardError("Error in EGV make_distance_in(): dist_milsA=",dist_milsA)
         return code
-    
+
     def make_dir_dist(self,dxmils,dymils,laser_on=False):
         adx = abs(dxmils)
         ady = abs(dymils)
@@ -182,7 +182,7 @@ class egv:
                     self.move(self.RIGHT,adx,laser_on)
                 else:
                     self.move(self.LEFT ,adx,laser_on)
-            
+
     def make_cut_line(self,dxmils,dymils,Spindle):
         XCODE = self.RIGHT
         if dxmils < 0.0:
@@ -190,7 +190,7 @@ class egv:
         YCODE = self.UP
         if dymils < 0.0:
             YCODE = self.DOWN
-            
+
         if abs(dxmils-round(dxmils,0)) > 0.0 or abs(dymils-round(dymils,0)) > 0.0:
             raise StandardError('Distance values should be integer value (inches*1000)')
 
@@ -200,7 +200,7 @@ class egv:
         if dxmils == 0:
             self.move(YCODE,abs(dymils),laser_on=Spindle)
         elif dymils == 0:
-            self.move(XCODE,abs(dxmils),laser_on=Spindle)      
+            self.move(XCODE,abs(dxmils),laser_on=Spindle)
         elif dxmils==dymils:
             self.move(self.ANGLE,abs(dxmils),laser_on=Spindle,angle_dirs=[XCODE,YCODE])
         else:
@@ -248,7 +248,7 @@ class egv:
                 d2cnt=d2cnt+d2
                 d2=0.0
 
-        
+
             DX = d2cnt
             DY = (d1cnt+d2cnt)
             if adx < ady:
@@ -266,8 +266,8 @@ class egv:
         s_code = "V%03d%03d%d" %(C1,C2,1)
         #s_code = "V%03d %03d %d" %(C1,C2,1)
         return s_code
-                    
-    
+
+
     def make_speed(self,Feed=None,board_name="LASER-M2",Raster_step=0):
         speed=[]
         append_code = ""
@@ -299,8 +299,8 @@ class egv:
             else:
                 speed_text =  "%sG%03d" %(Scode,abs(Raster_step))
             speed_text = speed_text + append_code
-            
-        ################################################################# 
+
+        #################################################################
         elif board_name=="LASER-M1":
             if Feed <= 5:
                 M = 1202.531
@@ -314,7 +314,7 @@ class egv:
             else:
                 speed_text =  "%sG%03d" %(Scode,abs(Raster_step))
             speed_text = speed_text + append_code
-            
+
         #################################################################
         elif board_name=="LASER-M":
             if Feed <= 5:
@@ -328,7 +328,7 @@ class egv:
                 speed_text = "C%s" %(Scode)
             else:
                 speed_text =  "%sG%03d" %(Scode,abs(Raster_step))
-                
+
         #################################################################
         elif board_name=="LASER-B2":
             if Feed <= .7:
@@ -365,12 +365,12 @@ class egv:
                 speed_text = "C%s000000000" %(Scode)
             else:
                 speed_text = "%sG%03d" %(Scode,abs(Raster_step))
-                
+
         #################################################################
         elif board_name=="LASER-B" or board_name=="LASER-A":
             if Feed <= .7:
                 M = 198.438
-                B = 16777468.940               
+                B = 16777468.940
             else:
                 M = 198.437
                 B = 252.940
@@ -383,7 +383,7 @@ class egv:
         #################################################################
         else:
             raise StandardError("Unknown Board Designation: %s" %(board_name))
-        
+
         for c in speed_text:
             speed.append(ord(c))
         return speed
@@ -456,7 +456,7 @@ class egv:
             [ 240.000 , 2 ],
             [ 241.000 , 0 ]
             ]
-        ################################################################# 
+        #################################################################
         elif board_name=="LASER-M1":
             vals = [
             [ 0.100 , 3141014 ],
@@ -506,7 +506,7 @@ class egv:
             [ 3.000 , 4092 ],
             [ 4.000 , 2158 ],
             [ 5.000 , 1190 ],
-            [ 6.000 , 1063 ], 
+            [ 6.000 , 1063 ],
             [ 7.000 , 11055 ],
             [ 8.000 , 8185 ],
             [ 9.000 , 6250 ],
@@ -550,7 +550,7 @@ class egv:
         elif board_name=="LASER-B" or board_name=="LASER-A":
             # LASER-A and LASER-B do not have this type of speed code.
             pass
-            
+
         if vals != []:
             xvals=[]
             yvals=[]
@@ -618,15 +618,15 @@ class egv:
             variable_feed_scale = 25.4/60.0
             Feed = round(ecoords_in[0][3]*variable_feed_scale,2)
             Spindle = False
-            
+
         speed = self.make_speed(Feed,board_name=board_name,Raster_step=Raster_step)
-        
+
         self.write(ord("I"))
         for code in speed:
             self.write(code)
-        
+
         if Raster_step==0:
-            lastx,lasty,last_loop = self.ecoord_adj(ecoords_in[0],scale,FlipXoffset)  
+            lastx,lasty,last_loop = self.ecoord_adj(ecoords_in[0],scale,FlipXoffset)
             self.make_dir_dist(lastx-startX,lasty-startY)
             self.flush(laser_on=False)
             self.write(ord("N"))
@@ -638,13 +638,13 @@ class egv:
             self.write(ord("E"))
             ###########################################################
             laser   = False
-        
+
             for i in range(1,len(ecoords_in)):
                 e0,e1,e2                = self.ecoord_adj(ecoords_in[i]  ,scale,FlipXoffset)
                 update_gui("Generating EGV Data: %.1f%%" %(100.0*float(i)/float(len(ecoords_in))))
                 if stop_calc[0]==True:
                     raise StandardError("Action Stopped by User.")
-            
+
                 if ( e2  == last_loop) and (not laser):
                     laser = True
                 elif ( e2  != last_loop) and (laser):
@@ -668,14 +668,14 @@ class egv:
                             self.rapid_move_slow(dx,dy)
                         else:
                             self.rapid_move_fast(dx,dy)
-                        
+
                 lastx     = e0
                 lasty     = e1
                 last_loop = e2
- 
+
             if laser:
                 laser = False
-                
+
             dx = startX-lastx
             dy = startY-lasty
             if ((abs(dx) < min_rapid) and (abs(dy) < min_rapid)):
@@ -694,7 +694,7 @@ class egv:
                 irange = range(len(ecoords_in))
             else:
                 irange = range(len(ecoords_in)-1,-1,-1)
-                
+
             for i in irange:
                 if i%1000 == 0:
                     update_gui("Preprocessing Raster Data: %.1f%%" %(100.0*float(i)/float(len(ecoords_in))))
@@ -709,7 +709,7 @@ class egv:
                         scanline[-1].append(ecoords_in[i])
             ###################################################
             lastx,lasty,last_loop = self.ecoord_adj(scanline[0][0],scale,FlipXoffset)
-            
+
             DXstart = lastx-startX
             DYstart = lasty-startY
             self.make_dir_dist(DXstart,DYstart)
@@ -758,7 +758,7 @@ class egv:
                         yoffset = -Raster_step*3
                     else:
                         yoffset = -Raster_step
-                    
+
                     if (dy+yoffset) < 0:
                         self.flush(laser_on=False)
                         self.write(ord("N"))
@@ -769,7 +769,7 @@ class egv:
                         Rapid_flag=True
                     else:
                         adj_steps = dy/Raster_step
-                        
+
                         for stp in range(1,adj_steps):
                             adj_dist=5
                             self.make_dir_dist(sign*adj_dist,0)
@@ -800,9 +800,9 @@ class egv:
                     else:
                         self.make_dir_dist( dxr,0)
                     lastx = lastx+dxr
-                    
+
                 Rapid_flag=False
-                ######################################   
+                ######################################
                 for j in rng:
                     x  = scan[j][0]
                     dx = x - lastx
@@ -816,8 +816,8 @@ class egv:
                     lastx     = x
                     last_loop = loop
                 lasty = y
-            
-            # Make final move to ensure last move is to the right 
+
+            # Make final move to ensure last move is to the right
             self.make_dir_dist(pad,0)
             lastx = lastx + pad
             # If sign is negative the final move will have incremented the
@@ -826,7 +826,7 @@ class egv:
                 lasty = lasty + Raster_step
 
             self.flush(laser_on=False)
-            
+
             self.write(ord("N"))
             dx_final = (startX - lastx)
             if Raster_step < 0:
@@ -838,7 +838,7 @@ class egv:
             self.write(ord("S"))
             self.write(ord("E"))
             ###########################################################
-                        
+
         # Append Footer
         self.flush(laser_on=False)
         self.write(ord("F"))
@@ -876,7 +876,7 @@ class egv:
 
         self.make_dir_dist(-cspad,-cspad)
         self.flush(laser_on=False)
-        
+
         self.write(ord("@"))
         self.write(ord("N"))
         self.write(ord("S"))
@@ -895,11 +895,11 @@ class egv:
 
         self.make_dir_dist(cspad,cspad)
         self.flush(laser_on=False)
-        
-        if laser_on:    
+
+        if laser_on:
             self.write(self.ON)
-            
-        
+
+
 if __name__ == "__main__":
     EGV=egv()
     #values  = [.1,.2,.3,.4,.5,.6,.7,.8,.9,1,2,3,4,5,6,7,8,9,10,20,30,40,50,70,90,100]
@@ -907,13 +907,13 @@ if __name__ == "__main__":
     bname = "LASER-M2"
     step=0
     for value_in in values:
-        print "% 8.2f" %(value_in),": ",
+        print ("% 8.2f" %(value_in),": ",)
         val=EGV.make_speed(value_in,board_name=bname,Raster_step=step)
         txt=""
         for c in val:
             txt=txt+chr(c)
-        print txt
-        
+        print (txt)
+
        #     for c in val2:
        #         print chr(c),
     #print ""

@@ -74,7 +74,7 @@ class G_Code_Rip:
                 self.accuracy = .025
         else:
             self.accuracy = float(Accuracy)
-        
+
         READ_MSG = []
 
         # Try to open file for reading
@@ -95,14 +95,14 @@ class G_Code_Rip:
         mode_arc  = "incremental" # "absolute"
         mode_pos = "absolute"    # "incremental"
 
-        mvtype = 1  # G0 (Rapid), G1 (linear), G2 (clockwise arc) or G3 (counterclockwise arc). 
+        mvtype = 1  # G0 (Rapid), G1 (linear), G2 (clockwise arc) or G3 (counterclockwise arc).
         plane  = "17" # G17 (Z-axis, XY-plane), G18 (Y-axis, XZ-plane), or G19 (X-axis, YZ-plane)
         pos     =['','','']
         pos_last=['','','']
         POS     =[complex(0,1),complex(0,1),complex(0,1)]
         feed = 0
         spindle = 0
-        
+
         #########################
         for line in fin:
             line_number = line_number + 1
@@ -110,7 +110,7 @@ class G_Code_Rip:
             line = line.replace("\n","")
             line = line.replace("\r","")
             code_line=[]
-            
+
             #####################
             ### FIND COMMENTS ###
             #####################
@@ -121,14 +121,14 @@ class G_Code_Rip:
                     code_line.append([ ";", line[s:e+1] ])
                     line = self.rm_text(line,s,e)
                     s = line.find("(")
-            
+
             if line.find(";") != -1:
                 s = line.find(";")
                 e = len(line)
                 code_line.append([ ";", line[s:e] ])
                 line = self.rm_text(line,s,e)
-            # If comment exists write it to output 
-            if code_line!= []: 
+            # If comment exists write it to output
+            if code_line!= []:
                 for comment in code_line:
                     self.g_code_data.append(comment)
                 code_line=[]
@@ -138,7 +138,7 @@ class G_Code_Rip:
             line = line.upper()
             line = line.replace(" ","")
 
-            
+
             #####################################################
             # Find # chars and check for a variable definition  #
             #####################################################
@@ -152,7 +152,7 @@ class G_Code_Rip:
                         e = e+1
                         vname = line[s:e].lower()
                     else:
-                        vname = re.findall(r'[-+]?\d+',line[s:])[0]	
+                        vname = re.findall(r'[-+]?\d+',line[s:])[0]
                         e = s + 1 + len(vname)
                         vname = line[s:e]
 
@@ -171,7 +171,7 @@ class G_Code_Rip:
                             except:
                                 READ_MSG.append(str(sys.exc_info()[1]))
                                 return READ_MSG
-                            
+
                         variables.append([vname,vval])
                         line  = self.rm_text(line,s,e-1)
                     else:
@@ -180,9 +180,9 @@ class G_Code_Rip:
                         for V in variables:
                             if V[0] == vname:
                                 VALUE = V[1]
-                                
+
                         line = self.insert_text(line,VALUE,s)
-                        
+
                     s = line.rfind("#")
 
             #########################
@@ -203,9 +203,9 @@ class G_Code_Rip:
                         elif line[e] == "]":
                             val = val - 1
                         e = e + 1
-                        
+
                     new_val = self.EXPRESSION_EVAL(line[s:e])
-                    
+
                     line = self.rm_text(line,s,e-1)
                     line = self.insert_text(line,new_val,s)
                     s = line.find("[")
@@ -235,7 +235,7 @@ class G_Code_Rip:
                     skip = True
             if skip:
                 continue
-                    
+
 
             ##############################
             ###    FIND ALL CODES      ###
@@ -253,7 +253,7 @@ class G_Code_Rip:
             # X X axis of machine
             # Y Y axis of machine
             # Z Z axis of machine
-            
+
             ALL = ("A","B","C","D","E","F","G","H","I","J",\
                    "K","L","M","N","O","P","Q","R","S","T",\
                    "U","V","W","X","Y","Z","#","=")
@@ -274,16 +274,16 @@ class G_Code_Rip:
                     s = temp[x][1]+1
                     if x == len(temp)-1:
                         e = len(line)
-                    else:    
+                    else:
                         e = temp[x+1][1]
-                    
+
                     CODE  = temp[x][0]
                     VALUE = line[s:e]
                     code_line.append([ CODE, VALUE ])
                     x = x + 1
 
             #################################
-                    
+
             mv_flag   = 0
             POS_LAST = POS[:]
             #CENTER  = ['','','']
@@ -317,13 +317,13 @@ class G_Code_Rip:
                         READ_MSG.append("Warning: G%s Codes are not supported ( G-Code File Line: %d )" %(Gnum,line_number))
                     elif Gnum == "90.1":
                         mode_arc = "absolute"
-                        
+
                     elif Gnum == "90":
                         mode_pos = "absolute"
 
                     elif Gnum == "91":
                         mode_pos = "incremental"
-                    
+
                     elif Gnum == "91.1":
                         mode_arc = "incremental"
 
@@ -331,15 +331,15 @@ class G_Code_Rip:
                         #READ_MSG.append("Aborting G-Code Reading: G%s Codes are not supported" %(Gnum))
                         READ_MSG.append("Warning: G%s Codes are not supported ( G-Code File Line: %d )" %(Gnum,line_number))
                         #return READ_MSG
-                        
+
                     elif Gnum == "38.2":
                         READ_MSG.append("Warning: G%s Codes are not supported ( G-Code File Line: %d )" %(Gnum,line_number))
                         #READ_MSG.append("Aborting G-Code Reading: G%s Codes are not supported" %(Gnum))
                         #return READ_MSG
-                    
+
                     else:
                         passthru = passthru +  "%s%s " %(com[0],com[1])
-                
+
                 elif com[0] == "X":
                     if mode_pos == "absolute":
                         POS[xind] = float(com[1])*scale
@@ -369,7 +369,7 @@ class G_Code_Rip:
                         CENTER[xind] = float(com[1])*scale + POS_LAST[xind]
                     if (mvtype==2 or mvtype==3):
                         mv_flag = 1
-                    
+
                 elif com[0] == "J":
                     if mode_arc == "absolute":
                         CENTER[yind] = float(com[1])*scale
@@ -388,11 +388,11 @@ class G_Code_Rip:
                 elif com[0] == "R":
                     Rin= float(com[1])*scale
                     CENTER = self.get_center(POS,POS_LAST,Rin,mvtype,plane)
-                        
+
                 ###################
                 elif com[0] == "F":
                     feed = float(com[1]) * scale
-                    
+
                 elif com[0] == "S":
                     spindle = float(com[1])
 
@@ -412,15 +412,15 @@ class G_Code_Rip:
                 elif com[0] == "N":
                     pass
                     #print "Ignoring Line Number %g" %(float(com[1]))
-                    
+
                 else:
                     passthru = passthru + "%s%s " %(com[0],com[1])
 
             pos      = POS[:]
             pos_last = POS_LAST[:]
             center = CENTER[:]
- 
-            # Most command on a line are executed prior to a move so 
+
+            # Most command on a line are executed prior to a move so
             # we will write the passthru commands on the line before we found them
             # only "M0, M1, M2, M30 and M60" are executed after the move commands
             # there is a risk that one of these commands could stop the program before
@@ -442,17 +442,17 @@ class G_Code_Rip:
                             self.g_code_data.append([mvtype,pos_last[:],pos[:],center[:],feed,spindle])
                         else:
                             data = self.arc2lines(pos_last[:],pos[:],center[:], mvtype, plane)
-                            
+
                             for line in data:
                                 XY=line
                                 self.g_code_data.append([1,XY[:3],XY[3:],feed,spindle])
-                                
+
                     elif plane == "18":
                         data = self.arc2lines(pos_last[:],pos[:],center[:], mvtype, plane)
                         for line in data:
                             XY=line
                             self.g_code_data.append([1,XY[:3],XY[3:],feed,spindle])
-                            
+
                     elif plane == "19":
                         data = self.arc2lines(pos_last[:],pos[:],center[:], mvtype, plane)
                         for line in data:
@@ -461,7 +461,7 @@ class G_Code_Rip:
             ###############################################################################
             #################################
         fin.close()
-                    
+
         ## Post process the g-code data to remove complex numbers
         cnt = 0
         firstx = complex(0,1)
@@ -513,7 +513,7 @@ class G_Code_Rip:
         #    if (ambiguousZ):  MSG = MSG + "Z position is not set by a G0(rapid) move prior to a G1,G2 or G3 move.\n"
         #    MSG = MSG + "!! Review output files carefully !!"
         #    READ_MSG.append(MSG)
-        
+
         return READ_MSG
 
     def get_center(self,POS,POS_LAST,Rin,mvtype,plane="17"):
@@ -533,7 +533,7 @@ class G_Code_Rip:
         CENTER=["","",""]
         cord = sqrt( (POS[xind]-POS_LAST[xind])**2 + (POS[yind]-POS_LAST[yind])**2 )
         v1 = cord/2.0
-        
+
         #print "rin=%f v1=%f (Rin**2 - v1**2)=%f" %(Rin,v1,(Rin**2 - v1**2))
         v2_sq = Rin**2 - v1**2
         if v2_sq<0.0:
@@ -579,7 +579,7 @@ class G_Code_Rip:
                 POS      = line[2][:]
                 CENTER   = ['','','']
                 feed     = line[3]
-                spindle  = line[4] 
+                spindle  = line[4]
 
             elif line[0] == 3 or line[0] == 2:
                 mvtype   = line[0]
@@ -592,7 +592,7 @@ class G_Code_Rip:
             else:
                 mvtype  = -1
                 passthru = line
-                
+
             ###############################################################################
             if mvtype >= 1 and mvtype <= 3:
                 pos      = self.coordop(POS,shift,angle)
@@ -605,7 +605,7 @@ class G_Code_Rip:
 
                 this=""
                 other=""
-                
+
                 if pos_last[0] > xsplit+self.Zero:
                     flag_side = R
                 elif pos_last[0] < xsplit-self.Zero:
@@ -616,9 +616,9 @@ class G_Code_Rip:
                             flag_side = R
                         else:
                             flag_side = L
-                            
+
                     elif mvtype == 2:
-                        
+
                         if abs(pos_last[1]-center[1]) < self.Zero:
                             if center[0] > xsplit:
                                 flag_side = R
@@ -629,7 +629,7 @@ class G_Code_Rip:
                                 flag_side = R
                             else:
                                 flag_side = L
-                                
+
                     else: #(mvtype == 3)
                         if abs(pos_last[1]-center[1]) < self.Zero:
                             if center[0] > xsplit:
@@ -648,9 +648,9 @@ class G_Code_Rip:
                 else:
                     this  = 0
                     other = 1
-                    
+
                 app=[self.apright, self.apleft]
-                
+
                 #############################
                 if mvtype == 0:
                     pass
@@ -678,7 +678,7 @@ class G_Code_Rip:
                         #Check length of arc before writing
                         if sqrt((A[0]-B[0])**2 + (A[1]-B[1])**2) > self.accuracy:
                             app[this]( [mvtype,A,B,D,feed,spindle])
-                            
+
                         if len(cross) == 1: ### Arc crosses boundary only once ###
                             #Check length of arc before writing
                             if sqrt((B[0]-C[0])**2 + (B[1]-C[1])**2) > self.accuracy:
@@ -702,14 +702,14 @@ class G_Code_Rip:
     #######################################
     def probe_code(self,code2probe,nX,nY,probe_istep,minx,miny,xPartitionLength,yPartitionLength): #,Xoffset,Yoffset):
     #def probe_code(self,code2probe,nX,nY,probe_istep,minx,miny,xPartitionLength,yPartitionLength,Xoffset,Yoffset,Zoffset):
-        #print "nX,nY =",nX,nY 
+        #print "nX,nY =",nX,nY
         probe_coords = []
         BPN=500
         POINT_LIST = [False for i in range(int((nY)*(nX)))]
-        
+
         if code2probe == []:
-            return 
-        
+            return
+
         mvtype = -1  # G0 (Rapid), G1 (linear), G2 (clockwise arc) or G3 (counterclockwise arc).
         passthru = ""
         POS      = [0,0,0]
@@ -749,11 +749,11 @@ class G_Code_Rip:
                 pos = POS[:]
                 pos_last = POS_LAST[:]
                 center = CENTER[:]
-                
+
                 #############################
                 if mvtype == 0:
                     out.append( [mvtype,pos_last,pos] )
-                    
+
                 if mvtype == 1:
                     dx = pos[0]-pos_last[0]
                     dy = pos[1]-pos_last[1]
@@ -767,16 +767,16 @@ class G_Code_Rip:
                         ystp0 = float(pos_last[1])
                         zstp0 = float(pos_last[2])
                         for n in range(1,Lsteps+1):
-                            xstp1 = n/float(Lsteps)*dx + pos_last[0] 
+                            xstp1 = n/float(Lsteps)*dx + pos_last[0]
                             ystp1 = n/float(Lsteps)*dy + pos_last[1]
                             zstp1 = n/float(Lsteps)*dz + pos_last[2]
                             out.append( [mvtype,[xstp0,ystp0,zstp0],[xstp1,ystp1,zstp1],feed,spindle] )
                             xstp0 = float(xstp1)
                             ystp0 = float(ystp1)
                             zstp0 = float(zstp1)
-                            
+
                 if mvtype == 2 or mvtype == 3:
-                    out.append( [ mvtype,pos_last,pos,center, feed,spindle] )                    
+                    out.append( [ mvtype,pos_last,pos,center, feed,spindle] )
             ###############################################################################
             else:
                 if passthru != '':
@@ -832,12 +832,12 @@ class G_Code_Rip:
                     #i_y = i_y-1  #commented 02/22
                     #print "adjust i_y POS_LAST"
                 i_y2 = i_y+1
-                
+
                 p_index_A =  int(i_y* nX + i_x )
                 p_index_B =  int(i_y2*nX + i_x )
                 p_index_C =  int(i_y *nX + i_x2)
-                p_index_D =  int(i_y2*nX + i_x2)                    
-                
+                p_index_D =  int(i_y2*nX + i_x2)
+
                 Xfraction=((pos_last[0]-minx)-(i_x*xPartitionLength))/xPartitionLength
                 Yfraction=((pos_last[1]-miny)-(i_y*yPartitionLength))/yPartitionLength
 
@@ -868,7 +868,7 @@ class G_Code_Rip:
                     POINT_LIST[p_index_C ] = True
                     POINT_LIST[p_index_D ] = True
                 except:
-                    pass 
+                    pass
                 #### ADD ADDITIONAL DATA TO POS_LAST DATA ####
                 i_x,i_y = self.get_ix_iy((pos[0]-minx),(pos[1]-miny),xPartitionLength,yPartitionLength)
                 #i_x = i_x+Xoffset
@@ -887,14 +887,14 @@ class G_Code_Rip:
                     #i_y = i_y-1#commented 02/22
                     #print "adjust i_y POS"
                 i_y2 = i_y+1
-                
+
                 p_index_A =  int(i_y* nX + i_x )
                 p_index_B =  int(i_y2*nX + i_x )
                 p_index_C =  int(i_y *nX + i_x2)
                 p_index_D =  int(i_y2*nX + i_x2)
                 Xfraction=((pos[0]-minx)-(i_x*xPartitionLength))/xPartitionLength
                 Yfraction=((pos[1]-miny)-(i_y*yPartitionLength))/yPartitionLength
-                
+
                 if Xfraction>1.0:
                     Xfraction = 1.0
                     #print "ERROR POS: Xfraction = ", Xfraction
@@ -907,7 +907,7 @@ class G_Code_Rip:
                 if Yfraction<0.0:
                     Yfraction = 0.0
                     #print "ERROR POS: Yfraction = ", Yfraction
-                    
+
                 out[i][2].append(p_index_A+BPN)
                 out[i][2].append(p_index_B+BPN)
                 out[i][2].append(p_index_C+BPN)
@@ -924,7 +924,7 @@ class G_Code_Rip:
         self.probe_gcode = out
         #for line in out:
         #    print line
-        
+
         ################################
         ##  Generate Probing Code     ##
         ##  For needed points         ##
@@ -945,7 +945,7 @@ class G_Code_Rip:
         i_y=int(y/yPartitionLength)
         return i_x,i_y
 
-    ####################################### 
+    #######################################
     def scale_rotate_code(self,code2scale,scale=[1.0,1.0,1.0,1.0],angle=0.0):
         if code2scale == []:
             return code2scale,0,0,0,0,0,0
@@ -965,7 +965,7 @@ class G_Code_Rip:
 
         L = 0
         R = 1
-        flag_side = 1  
+        flag_side = 1
 
         for line in code2scale:
             if line[0] == 0  or line[0] == 1:
@@ -999,33 +999,33 @@ class G_Code_Rip:
                     center = self.scale_rot_coords(CENTER,scale,angle)
                 else:
                     center = CENTER
-                 
+
                 #############################
                 try:
-                    minx = min( minx, min(pos[0],pos_last[0]) ) 
+                    minx = min( minx, min(pos[0],pos_last[0]) )
                     maxx = max( maxx, max(pos[0],pos_last[0]) )
                 except:
                     pass
                 try:
-                    miny = min( miny, min(pos[1],pos_last[1]) ) 
+                    miny = min( miny, min(pos[1],pos_last[1]) )
                     maxy = max( maxy, max(pos[1],pos_last[1]) )
                 except:
                     pass
                 try:
-                    minz = min( minz, min(pos[2],pos_last[2]) ) 
+                    minz = min( minz, min(pos[2],pos_last[2]) )
                     maxz = max( maxz, max(pos[2],pos_last[2]) )
                 except:
                     pass
 
                 if mvtype == 0:
                     out.append( [mvtype,pos_last,pos] )
-                
+
                 if mvtype == 1:
                     out.append( [mvtype,pos_last,pos,feed, spindle] )
 
                 if mvtype == 2 or mvtype == 3:
                     out.append( [ mvtype,pos_last,pos,center, feed, spindle] )
-                    
+
                     if mvtype == 3:
                         ang1 = self.Get_Angle2(pos_last[0]-center[0],pos_last[1]-center[1])
                         xtmp,ytmp = self.Transform(pos[0]-center[0],pos[1]-center[1],radians(-ang1))
@@ -1035,12 +1035,12 @@ class G_Code_Rip:
                         ang1 = self.Get_Angle2(pos[0]-center[0],pos[1]-center[1])
                         xtmp,ytmp = self.Transform(pos_last[0]-center[0],pos_last[1]-center[1],radians(-ang1))
                         ang2 = self.Get_Angle2(xtmp,ytmp)
-                        
+
                     if ang2 == 0:
                         ang2=359.999
-                        
+
                     Radius = sqrt( (pos[0]-center[0])**2 +(pos[1]-center[1])**2 )
-                            
+
                     if ang1 > 270:
                         da = 270
                     elif ang1 > 180:
@@ -1061,21 +1061,21 @@ class G_Code_Rip:
                             if spd==270:
                                 miny = min( miny, center[1]-Radius )
                             if spd==360:
-                                maxx = max( maxx, center[0]+Radius )           
+                                maxx = max( maxx, center[0]+Radius )
             ###############################################################################
             else:
                 if passthru != '':
                     out.append(passthru)
-                    
+
         return out,minx,maxx,miny,maxy,minz,maxz
 
 
     #######################################
     def scale_translate(self,code2translate,translate=[0.0,0.0,0.0]):
-        
+
         if translate[0]==0 and translate[1]==0 and translate[2]==0:
             return code2translate
-        
+
         mvtype = -1  # G0 (Rapid), G1 (linear), G2 (clockwise arc) or G3 (counterclockwise arc).
         passthru = ""
         POS     =[0,0,0]
@@ -1087,7 +1087,7 @@ class G_Code_Rip:
 
         L = 0
         R = 1
-        flag_side = 1  
+        flag_side = 1
 
         for line in code2translate:
             if line[0] == 1 or line[0] == 0:
@@ -1118,11 +1118,11 @@ class G_Code_Rip:
                     center      = self.scale_trans_coords(CENTER,translate)
                 else:
                     center = CENTER[:]
-                 
+
                 #############################
                 if mvtype == 0:
                     out.append( [mvtype,pos_last,pos] )
-                
+
                 if mvtype == 1:
                     out.append( [mvtype,pos_last,pos,feed,spindle] )
 
@@ -1179,7 +1179,7 @@ class G_Code_Rip:
         g_code.append("( by Scorch - 2017 www.scorchworks.com                    )")
         if Wrap == "XYZ":
             AXIS=["X"     , "Y"     , "Z"     ]
-            DECP=[PLACES_L, PLACES_L, PLACES_L]  
+            DECP=[PLACES_L, PLACES_L, PLACES_L]
         elif Wrap == "Y2A":
             AXIS=["X"     , "A"     , "Z"     ]
             DECP=[PLACES_L, PLACES_R, PLACES_L]
@@ -1200,25 +1200,25 @@ class G_Code_Rip:
             DECP=[PLACES_R, PLACES_L, PLACES_L]
             WriteAll=False
             g_code.append("(G-Code Ripper has mapped the X-Axis to the A-Axis      )")
-            
+
         if Wrap != "XYZ":
             g_code.append("(A nominal stock radius of %f was used.             )" %(Rstock))
             g_code.append("(Z-axis zero position is the surface of the round stock.  )")
             g_code.append("(---------------------------------------------------------)")
-            
+
         g_code.append("G90   (set absolute distance mode)")
         g_code.append("G90.1 (set absolute distance mode for arc centers)")
         g_code.append("G17   (set active plane to XY)")
-        
+
         if self.units == "in":
             g_code.append("G20   (set units to inches)")
         else:
             g_code.append("G21   (set units to mm)")
-            
+
         if no_variables==False:
             g_code.append("#<z_safe> = % 5.3f " %(z_safe))
             g_code.append("#<plunge_feed> = % 5.0f " %(plunge_feed))
-            
+
         for line in preamble.split('|'):
             g_code.append(line)
 
@@ -1228,11 +1228,11 @@ class G_Code_Rip:
         ###################
         for line in side:
             if line[0] == 1 or line[0] == 2 or line[0] == 3 or (line[0] == 0 and gen_rapids == False):
-                D0 = line[2][0]-line[1][0] 
-                D1 = line[2][1]-line[1][1] 
+                D0 = line[2][0]-line[1][0]
+                D1 = line[2][1]-line[1][1]
                 D2 = line[2][2]-line[1][2]
                 D012 = sqrt((D0+0j).real**2+(D1+0j).real**2+(D2+0j).real**2)
-                
+
                 coordA=[ line[1][0], line[1][1], line[1][2] ]
                 coordB=[ line[2][0], line[2][1], line[2][2] ]
                 if Wrap == "Y2A" or Wrap == "Y2B":
@@ -1265,7 +1265,7 @@ class G_Code_Rip:
                         LINE = "G0"
                         LINE = self.app_gcode_line(LINE,AXIS[2],z_safe,DECP[2],WriteAll)
                         if len(LINE) > 2: g_code.append(LINE)
-                    
+
                     ### Move tool to coordinates of next cut ###
                     LINE = "G0"
                     LINE = self.app_gcode_line(LINE,AXIS[0],coordA[0],DECP[0],WriteAll)
@@ -1278,7 +1278,7 @@ class G_Code_Rip:
                             LINE = self.app_gcode_line(LINE,AXIS[2],coordA[2],DECP[2],WriteAll)
                             LINE = LINE + " F #<plunge_feed>"
                             self.MODAL_VAL["F"] = plunge_feed
-                            if len(LINE) > 2: g_code.append(LINE)                 
+                            if len(LINE) > 2: g_code.append(LINE)
                         else:
                             LINE = "G1"
                             LINE = self.app_gcode_line(LINE,AXIS[2],coordA[2]  ,DECP[2]  , WriteAll)
@@ -1296,7 +1296,7 @@ class G_Code_Rip:
                 except: LAST1 = coordB[1]
                 try:    LAST2 = float(self.MODAL_VAL[AXIS[2]])
                 except: LAST2 = coordB[2]
-                
+
                 LINE = "G%d" %(line[0])
                 LINE = self.app_gcode_line(LINE,AXIS[0],coordB[0],DECP[0],WriteAll)
                 LINE = self.app_gcode_line(LINE,AXIS[1],coordB[1],DECP[1],WriteAll)
@@ -1319,7 +1319,7 @@ class G_Code_Rip:
                     else:
                         Feed_adj = line[3]
                     LINE = self.app_gcode_line(LINE,"F",Feed_adj  ,PLACES_F,WriteAll)
-                    
+
                 elif (line[0] == 2) or (line[0] == 3):
                     LINE = self.app_gcode_line(LINE,"I",line[3][0],DECP[0]  ,WriteAll)
                     LINE = self.app_gcode_line(LINE,"J",line[3][1],DECP[1]  ,WriteAll)
@@ -1332,7 +1332,7 @@ class G_Code_Rip:
             elif line[0] == ";":
                 if not NoComments:
                     g_code.append("%s" %(line[1]))
-                
+
             elif line[0] == "M2":
                 if gen_rapids == True:
                     if no_variables==False:
@@ -1342,7 +1342,7 @@ class G_Code_Rip:
                         LINE = "G0"
                         LINE = self.app_gcode_line(LINE,AXIS[2],z_safe,DECP[2],WriteAll)
                         g_code.append(LINE)
-                        
+
                 for entry in postamble.split('|'):
                     g_code.append(entry)
                 #g_code.append(line[0])
@@ -1383,7 +1383,7 @@ class G_Code_Rip:
     def get_arc_intersects(self, p1, p2, xsplit, cent, code):
         xcross1= xsplit
         xcross2= xsplit
-     
+
         R = sqrt( (cent[0]-p1[0])**2 + (cent[1]-p1[1])**2 )
         Rt= sqrt( (cent[0]-p2[0])**2 + (cent[1]-p2[1])**2 )
         if abs(R-Rt) > self.accuracy:  self.fmessage("Radius Warning: R1=%f R2=%f"%(R,Rt))
@@ -1408,7 +1408,7 @@ class G_Code_Rip:
 
         xt,yt = self.Transform(xsplit-cent[0],ycross2-cent[1],radians(-theta))
         gt2 = self.Get_Angle2(xt,yt,code)
- 
+
         if gt1 < gt2:
            gamma1 = gt1
            gamma2 = gt2
@@ -1419,7 +1419,7 @@ class G_Code_Rip:
            ycross1 = ycross2
            ycross2 = temp
 
-        dz = p2[2] - p1[2]    
+        dz = p2[2] - p1[2]
         da = beta
         mz = dz/da
         zcross1 = p1[2] + gamma1 * mz
@@ -1430,7 +1430,7 @@ class G_Code_Rip:
             output.append([xcross1,ycross1,zcross1])
         if gamma2 < beta and gamma1 > self.Zero and gamma2 < beta-self.Zero:
             output.append([xcross2,ycross2,zcross2])
-        
+
         #print(" start: x1 =%5.2f y1=%5.2f z1=%5.2f" %(p1[0],     p1[1],     p1[2]))
         #print("   end: x2 =%5.2f y2=%5.2f z2=%5.2f" %(p2[0],     p2[1],     p2[2]))
         #print("center: xc =%5.2f yc=%5.2f xsplit=%5.2f code=%s" %(cent[0],cent[1],xsplit,code))
@@ -1459,7 +1459,7 @@ class G_Code_Rip:
             xind=0
             yind=1
             zind=2
-        
+
         R = sqrt( (cent[xind]-p1[xind])**2 + (cent[yind]-p1[yind])**2 )
         Rt= sqrt( (cent[xind]-p2[xind])**2 + (cent[yind]-p2[yind])**2 )
         if abs(R-Rt) > self.accuracy:  self.fmessage("Radius Warning: R1=%f R2=%f "%(R,Rt))
@@ -1480,22 +1480,22 @@ class G_Code_Rip:
             Z1 = p2[zind]
             zstart = Z1
             zend   = p1[zind]
-            
+
         beta  = self.Get_Angle2(xbeta,ybeta) #,code)
-        
+
         if abs(beta) <= self.Zero: beta = 360.0
         ##########################################
         arc_step=self.arc_angle
-        
+
         my_range=[]
-        
+
         at=arc_step
         while at < beta:
             my_range.append(at)
             at = at+arc_step
         my_range.append(beta)
 
-        
+
 
         new_lines=[]
         for at in my_range:
@@ -1524,20 +1524,20 @@ class G_Code_Rip:
                 data[3+yind]=Y1
                 data[3+zind]=Z1
                 new_lines.insert(0, data)
-        
+
             X1=X2
             Y1=Y2
             Z1=Z2
             at = at+arc_step
 
         return new_lines
-    
+
     def get_line_intersect(self,p1, p2, xsplit):
         dx = p2[0] - p1[0]
         dy = p2[1] - p1[1]
         dz = p2[2] - p1[2]
-        
-        xcross = xsplit 
+
+        xcross = xsplit
         try:
             my = dy/dx
             by = p1[1] - my * p1[0]
@@ -1553,7 +1553,7 @@ class G_Code_Rip:
 
         output=[]
         if xcross > min(p1[0],p2[0])+self.Zero and xcross < max(p1[0],p2[0])-self.Zero:
-            output.append([xcross,ycross,zcross])            
+            output.append([xcross,ycross,zcross])
         return output
 
 
@@ -1586,23 +1586,23 @@ class G_Code_Rip:
 
     def coordop(self,coords,offset,rot):
         x = coords[0]
-        y = coords[1] 
+        y = coords[1]
         z = coords[2]
         x = x - offset[0]
         y = y - offset[1]
-        z = z - offset[2] 
+        z = z - offset[2]
         x,y = self.Transform(x,y, radians(rot) )
         return [x,y,z]
 
 
     def coordunop(self,coords,offset,rot):
         x = coords[0]
-        y = coords[1] 
+        y = coords[1]
         z = coords[2]
         x,y = self.Transform(x,y, radians(-rot) )
         x = x + offset[0]
         y = y + offset[1]
-        z = z + offset[2] 
+        z = z + offset[2]
         return [x,y,z]
 
     #######################################    #######################################
@@ -1662,7 +1662,7 @@ class G_Code_Rip:
             return tan(radians(fval))
         if name == "EXISTS":
             pass
-        
+
     def EXPRESSION_EVAL(self,line):
         ###################################################
         ###          EVALUATE MATH IN REGION            ###
@@ -1674,10 +1674,10 @@ class G_Code_Rip:
         if len(line)<2:
             MSG = "ERROR EXP-1: Unable to evaluate expression: %s\n" %(line_in)
             raise ValueError(MSG)
-        
-        
+
+
         line = line.replace(" ","")
-        
+
         #################################################
         ###           G-CODE OPPERATORS               ###
         ###          In Precedence Order              ###
@@ -1711,11 +1711,11 @@ class G_Code_Rip:
                 if sign > 0:
                     line = tmp1+'+'+tmp2
                 else:
-                    line = tmp1+'-'+tmp2    
+                    line = tmp1+'-'+tmp2
             cnt=cnt + 1
             if cnt >= len(line):
                 cnt = -1
-                
+
         #########################################
         ### Replace multi-character operators ###
         ### with single character identifiers ###
@@ -1734,12 +1734,12 @@ class G_Code_Rip:
         ###     Split the text into a list    ###
         #########################################
         line = re.split( "([\[,\],\^,\*,\/,\%,\+,\-,\|  ,\&  ,\l ,\< ,\g ,\> ,\! ,\= ])", line)
-        
+
         #########################################
         ### Remove empty items from the list  ###
         #########################################
         for i in range(line.count('')): line.remove('')
-        
+
         #########################################
         ###   Find the last "[" in the list   ###
         #########################################
@@ -1751,8 +1751,8 @@ class G_Code_Rip:
             MSG = "ERROR EXP-2: Unable to evaluate expression: %s" %(line_in)
             #self.fmessage(MSG)
             raise ValueError(MSG)
-        
-        #################################################################    
+
+        #################################################################
         ###  While there are still brackets "[...]" keep processing   ###
         #################################################################
         while s != -1:
@@ -1763,12 +1763,12 @@ class G_Code_Rip:
             for cnt in range(len(line)-1,s,-1):
                 if line[cnt] == ']':
                     e = cnt
-                    
+
             #############################################
             ###  Find the items between the brackets  ###
             #############################################
             temp = line[s+1:e]
-            
+
             ##############################################################
             ###  Fix Some Special Cases                                ###
             ##############################################################
@@ -1815,10 +1815,10 @@ class G_Code_Rip:
                                             for cnt in range(1,len(add)):
                                                 if add[cnt-1]==[]:
                                                     add[cnt-1]  = ''
-                                            for i in range(add.count('')): add.remove('')      
+                                            for i in range(add.count('')): add.remove('')
                                             for iadd in range(0,len(add)):
                                                 #####################################
-                                                subtract = self.list_split(add[iadd],"-")         
+                                                subtract = self.list_split(add[iadd],"-")
                                                 for cnt in range(1,len(subtract)):
                                                     if subtract[cnt-1]==[]:
                                                         subtract[cnt-1]  = ''
@@ -1840,7 +1840,7 @@ class G_Code_Rip:
                                                                     if power[ipow]==[]:
                                                                         MSG = "ERROR EXP-3: Unable to evaluate expression: %s" %(line_in)
                                                                         raise ValueError(MSG)
-                                                                    
+
                                                                     if type(power[0]) is list:
                                                                         power_len = len(power[0])
                                                                     else:
@@ -1872,7 +1872,7 @@ class G_Code_Rip:
                                                     res_multiply=multiply[0]
                                                     for k in range(1,len(multiply)):
                                                         res_multiply = res_multiply*multiply[k]
-                                                        if P==True: self.fmessage("MULTIPLY"+str(multiply)+"="+str(res_multiply))         
+                                                        if P==True: self.fmessage("MULTIPLY"+str(multiply)+"="+str(res_multiply))
                                                     subtract[isub]=res_multiply
                                                 #####################################
                                                 res_subtract=subtract[0]
@@ -1971,10 +1971,10 @@ class G_Code_Rip:
             for cnt in range(s+1,len(line)):
                 if line[cnt] == '[':
                     s = cnt
-        #################################################################    
+        #################################################################
         ###  END of While there are still brackets "[...]"            ###
         #################################################################
-        
+
         if len(line) > 1:
             MSG = "ERROR EXP-5: Unable to evaluate expression: %s" %(line_in)
             raise ValueError(MSG)
@@ -2043,11 +2043,11 @@ class G_Code_Rip:
                 x2=(line[2][0]+0j).real
                 y2=(line[2][1]+0j).real
                 z2=(line[2][2]+0j).real
-    
+
                 if xlast!=x1 or ylast!=y1:
                     loop = loop+1
                     ecoords.append([x1,y1,loop,feed,spindle])
-                    
+
                 if x2!=x1 or y2!=y1:
                     ecoords.append([x2,y2,loop,feed,spindle])
 
@@ -2065,7 +2065,7 @@ if __name__ == "__main__":
     g_rip = G_Code_Rip()
     filename="Z:\\text.ngc"
     MSG = g_rip.Read_G_Code(filename, XYarc2line = True, arc_angle=2, units="in", Accuracy="")
-    print MSG
+    print (MSG)
     ecoords = g_rip.generate_laser_paths(g_rip.g_code_data)
     for line in ecoords:
-        print line
+        print (line)
